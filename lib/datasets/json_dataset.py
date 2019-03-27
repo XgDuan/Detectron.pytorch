@@ -447,6 +447,7 @@ def _merge_proposal_boxes_into_roidb(roidb, box_list):
         if len(gt_inds) > 0:
             gt_boxes = entry['boxes'][gt_inds, :]
             gt_classes = entry['gt_classes'][gt_inds]
+            # gt_attributes = entry['gt_attributes'][gt_inds, :]
             proposal_to_gt_overlaps = box_utils.bbox_overlaps(
                 boxes.astype(dtype=np.float32, copy=False),
                 gt_boxes.astype(dtype=np.float32, copy=False)
@@ -469,6 +470,11 @@ def _merge_proposal_boxes_into_roidb(roidb, box_list):
         entry['gt_classes'] = np.append(
             entry['gt_classes'],
             np.zeros((num_boxes), dtype=entry['gt_classes'].dtype)
+        )
+        entry['gt_attributes'] = np.append(
+            entry['gt_attributes'],
+            np.zeros((num_boxes, cfg.MODEL.NUM_ATTRIBUTES), dtype=entry['gt_attributes'].dtype),
+            axis=0
         )
         entry['seg_areas'] = np.append(
             entry['seg_areas'],

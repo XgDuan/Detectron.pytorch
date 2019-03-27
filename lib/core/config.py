@@ -403,6 +403,10 @@ __C.MODEL.CONV_BODY = ''
 # E.g., 81 for COCO (80 foreground + 1 background)
 __C.MODEL.NUM_CLASSES = -1
 
+# Number of attributes in the dataset; must be set
+# This value should be exactly the same with the number of attribute (multi-class classification)
+__C.MODEL.NUM_ATTRIBUTES = -1
+
 # Use a class agnostic bounding box regressor instead of the default per-class
 # regressor
 __C.MODEL.CLS_AGNOSTIC_BBOX_REG = False
@@ -428,6 +432,9 @@ __C.MODEL.BBOX_REG_WEIGHTS = (10., 10., 5., 5.)
 #    consists of alternating between RPN and Fast R-CNN training in a way that
 #    finally leads to a single network).
 __C.MODEL.FASTER_RCNN = False
+
+# Attribute branch
+__C.MODEL.ATTRIBUTE_ON = False
 
 # Indicates the model makes instance mask predictions (as in Mask R-CNN)
 __C.MODEL.MASK_ON = False

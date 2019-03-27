@@ -148,8 +148,6 @@ class Generalized_RCNN(nn.Module):
         if self.training:
             roidb = list(map(lambda x: blob_utils.deserialize(x)[0], roidb))
 
-        device_id = im_data.get_device()
-
         return_dict = {}  # A dict to collect return variables
 
         blob_conv = self.Conv_Body(im_data)
@@ -171,11 +169,13 @@ class Generalized_RCNN(nn.Module):
                 box_feat, res5_feat = self.Box_Head(blob_conv, rpn_ret)
             else:
                 box_feat = self.Box_Head(blob_conv, rpn_ret)
-            cls_score, bbox_pred = self.Box_Outs(box_feat)
+            if cfg.MODEL.ATTRIBUTE_ON:
+                cls_score, bbox_pred, attribute_pred = self.Box_Outs(box_feat)
+            else:
+                cls_score, bbox_pred = self.Box_Outs(box_feat)
         else:
             # TODO: complete the returns for RPN only situation
             pass
-
         if self.training:
             return_dict['losses'] = {}
             return_dict['metrics'] = {}
@@ -194,9 +194,17 @@ class Generalized_RCNN(nn.Module):
                 return_dict['losses']['loss_rpn_bbox'] = loss_rpn_bbox
 
             # bbox loss
-            loss_cls, loss_bbox, accuracy_cls = fast_rcnn_heads.fast_rcnn_losses(
-                cls_score, bbox_pred, rpn_ret['labels_int32'], rpn_ret['bbox_targets'],
-                rpn_ret['bbox_inside_weights'], rpn_ret['bbox_outside_weights'])
+            if cfg.MODEL.ATTRIBUTE_ON:
+                loss_cls, loss_bbox, loss_attribute, accuracy_cls = fast_rcnn_heads.fast_rcnn_losses_with_attribute(
+                    cls_score, bbox_pred, rpn_ret['labels_int32'], rpn_ret['bbox_targets'],
+                    rpn_ret['bbox_inside_weights'], rpn_ret['bbox_outside_weights'],
+                    attribute_pred, rpn_ret['attribute_target_float'])
+                return_dict['losses']['loss_attribute'] = loss_attribute
+            else:
+                loss_cls, loss_bbox, accuracy_cls = fast_rcnn_heads.fast_rcnn_losses(
+                    cls_score, bbox_pred, rpn_ret['labels_int32'], rpn_ret['bbox_targets'],
+                    rpn_ret['bbox_inside_weights'], rpn_ret['bbox_outside_weights'])
+
             return_dict['losses']['loss_cls'] = loss_cls
             return_dict['losses']['loss_bbox'] = loss_bbox
             return_dict['metrics']['accuracy_cls'] = accuracy_cls
@@ -244,7 +252,8 @@ class Generalized_RCNN(nn.Module):
             return_dict['rois'] = rpn_ret['rois']
             return_dict['cls_score'] = cls_score
             return_dict['bbox_pred'] = bbox_pred
-
+            if cfg.MODEL.ATTRIBUTE_ON:
+                return_dict['attribute_pred'] = attribute_pred
         return return_dict
 
     def roi_feature_transform(self, blobs_in, rpn_ret, blob_rois='rois', method='RoIPoolF',

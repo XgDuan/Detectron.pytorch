@@ -94,9 +94,10 @@ class GqaDataset(object):
         #     categories = ['cube', 'cylinder', 'sphere']
         categories, attributes = self._prepare_category()
         self.category_to_id_map = dict(zip(categories, range(1, 1 + len(categories))))
-        self.attribute_to_id_map = dict(zip(attributes, range(1, 1 + len(attributes))))
+        self.attribute_to_id_map = dict(zip(attributes, range(len(attributes))))
         self.classes = ['__background__'] + categories
         self.num_classes = len(self.classes)
+        self.num_attribute = len(self.attribute_to_id_map)
         self.keypoints = None
 
     def _prepare_category(self):
@@ -186,6 +187,7 @@ class GqaDataset(object):
         entry['boxes'] = np.empty((0, 4), dtype=np.float32)
         entry['segms'] = []
         entry['gt_classes'] = np.empty((0), dtype=np.int32)
+        entry['gt_attributes'] = np.empty((0, self.num_attribute), dtype=np.float32)  # multi-hot encoding
         entry['seg_areas'] = np.empty((0), dtype=np.float32)
         entry['gt_overlaps'] = scipy.sparse.csr_matrix(
             np.empty((0, self.num_classes), dtype=np.float32)
@@ -219,6 +221,7 @@ class GqaDataset(object):
 
         boxes = np.zeros((num_valid_objs, 4), dtype=entry['boxes'].dtype)
         gt_classes = np.zeros((num_valid_objs), dtype=entry['gt_classes'].dtype)
+        gt_attribute = np.zeros((num_valid_objs, self.num_attribute), dtype=entry['gt_attributes'].dtype)
         gt_overlaps = np.zeros(
             (num_valid_objs, self.num_classes),
             dtype=entry['gt_overlaps'].dtype
@@ -231,6 +234,8 @@ class GqaDataset(object):
         for ix, obj in enumerate(valid_objs):
             boxes[ix, :] = obj['clean_bbox']
             gt_classes[ix] = self.category_to_id_map[obj['name']]
+            for attribute in obj['attributes']:
+                gt_attribute[ix][self.attribute_to_id_map[attribute]] = 1
             # is_crowd[ix] = obj['iscrowd']
             is_crowd[ix] = 0
             box_to_gt_ind_map[ix] = ix
@@ -245,6 +250,7 @@ class GqaDataset(object):
         # entry['boxes'] = np.append(
         #     entry['boxes'], boxes.astype(np.int).astype(np.float), axis=0)
         entry['gt_classes'] = np.append(entry['gt_classes'], gt_classes)
+        entry['gt_attributes'] = np.append(entry['gt_attributes'], gt_attribute, axis=0)
         entry['gt_overlaps'] = np.append(
             entry['gt_overlaps'].toarray(), gt_overlaps, axis=0
         )

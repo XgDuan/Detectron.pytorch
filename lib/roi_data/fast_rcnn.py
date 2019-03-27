@@ -51,6 +51,9 @@ def get_fast_rcnn_blob_names(is_training=True):
         # this binary vector sepcifies the subset of active targets
         blob_names += ['bbox_inside_weights']
         blob_names += ['bbox_outside_weights']
+    if is_training and cfg.MODEL.ATTRIBUTE_ON:
+        blob_names += ['attribute_target_float']
+
     if is_training and cfg.MODEL.MASK_ON:
         # 'mask_rois': RoIs sampled for training the mask prediction branch.
         # Shape is (#masks, 5) in format (batch_idx, x1, y1, x2, y2).
@@ -167,6 +170,7 @@ def _sample_rois(roidb, im_scale, batch_idx):
         gt_inds = np.where(roidb['gt_classes'] > 0)[0]
         gt_boxes = roidb['boxes'][gt_inds, :]
         gt_assignments = gt_inds[roidb['box_to_gt_ind_map'][keep_inds]]
+        attribute_target_float = roidb['gt_attributes'][gt_inds, :][gt_assignments, :]
         bbox_targets = _compute_targets(
             sampled_boxes, gt_boxes[gt_assignments, :], sampled_labels)
         bbox_targets, bbox_inside_weights = _expand_bbox_targets(bbox_targets)
@@ -185,6 +189,7 @@ def _sample_rois(roidb, im_scale, batch_idx):
     # Base Fast R-CNN blobs
     blob_dict = dict(
         labels_int32=sampled_labels.astype(np.int32, copy=False),
+        attribute_target_float=attribute_target_float,
         rois=sampled_rois,
         bbox_targets=bbox_targets,
         bbox_inside_weights=bbox_inside_weights,

@@ -17,7 +17,8 @@ class fast_rcnn_outputs(nn.Module):
             self.bbox_pred = nn.Linear(dim_in, 4 * 2)
         else:
             self.bbox_pred = nn.Linear(dim_in, 4 * cfg.MODEL.NUM_CLASSES)
-
+        if cfg.MODEL.ATTRIBUTE_ON:
+            self.attribute_pred = nn.Linear(dim_in, cfg.MODEL.NUM_ATTRIBUTES)
         self._init_weights()
 
     def _init_weights(self):
@@ -25,13 +26,18 @@ class fast_rcnn_outputs(nn.Module):
         init.constant_(self.cls_score.bias, 0)
         init.normal_(self.bbox_pred.weight, std=0.001)
         init.constant_(self.bbox_pred.bias, 0)
+        if cfg.MODEL.ATTRIBUTE_ON:
+            init.normal_(self.attribute_pred.weight, std=0.001)
+            init.constant_(self.attribute_pred.bias, 0)
 
     def detectron_weight_mapping(self):
         detectron_weight_mapping = {
             'cls_score.weight': 'cls_score_w',
             'cls_score.bias': 'cls_score_b',
             'bbox_pred.weight': 'bbox_pred_w',
-            'bbox_pred.bias': 'bbox_pred_b'
+            'bbox_pred.bias': 'bbox_pred_b',
+            'attribute_pred.weight': 'attribute_pred_w',
+            'attribute_pred.bias': 'attribute_pred_b'
         }
         orphan_in_detectron = []
         return detectron_weight_mapping, orphan_in_detectron
@@ -43,8 +49,11 @@ class fast_rcnn_outputs(nn.Module):
         if not self.training:
             cls_score = F.softmax(cls_score, dim=1)
         bbox_pred = self.bbox_pred(x)
-
-        return cls_score, bbox_pred
+        if cfg.MODEL.ATTRIBUTE_ON:
+            attribute_pred = self.attribute_pred(x)
+            return cls_score, bbox_pred, attribute_pred
+        else:
+            return cls_score, bbox_pred
 
 
 def fast_rcnn_losses(cls_score, bbox_pred, label_int32, bbox_targets,
@@ -66,9 +75,31 @@ def fast_rcnn_losses(cls_score, bbox_pred, label_int32, bbox_targets,
     return loss_cls, loss_bbox, accuracy_cls
 
 
+def fast_rcnn_losses_with_attribute(cls_score, bbox_pred, label_int32, bbox_targets,
+                                     bbox_inside_weights, bbox_outside_weights, attribute_pred, attribute_label_float):
+    device_id = cls_score.get_device()
+    rois_label = Variable(torch.from_numpy(label_int32.astype('int64'))).cuda(device_id)
+    loss_cls = F.cross_entropy(cls_score, rois_label)
+
+    bbox_targets = Variable(torch.from_numpy(bbox_targets)).cuda(device_id)
+    bbox_inside_weights = Variable(torch.from_numpy(bbox_inside_weights)).cuda(device_id)
+    bbox_outside_weights = Variable(torch.from_numpy(bbox_outside_weights)).cuda(device_id)
+    loss_bbox = net_utils.smooth_l1_loss(
+        bbox_pred, bbox_targets, bbox_inside_weights, bbox_outside_weights)
+
+    attribute_target = Variable(torch.from_numpy(attribute_label_float).cuda(device_id))
+    loss_attribute = F.multilabel_soft_margin_loss(attribute_pred, attribute_target)
+
+    # class accuracy
+    cls_preds = cls_score.max(dim=1)[1].type_as(rois_label)
+    accuracy_cls = cls_preds.eq(rois_label).float().mean(dim=0)
+
+    return loss_cls, loss_bbox, loss_attribute, accuracy_cls
+
 # ---------------------------------------------------------------------------- #
 # Box heads
 # ---------------------------------------------------------------------------- #
+
 
 class roi_2mlp_head(nn.Module):
     """Add a ReLU MLP with two hidden layers."""

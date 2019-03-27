@@ -336,7 +336,6 @@ class fpn_rpn_outputs(nn.Module):
             else num_anchors
         self.FPN_RPN_cls_score = nn.Conv2d(self.dim_out, dim_score, 1, 1, 0)
         self.FPN_RPN_bbox_pred = nn.Conv2d(self.dim_out, 4 * num_anchors, 1, 1, 0)
-
         self.GenerateProposals_modules = nn.ModuleList()
         k_max = cfg.FPN.RPN_MAX_LEVEL  # coarsest level of pyramid
         k_min = cfg.FPN.RPN_MIN_LEVEL  # finest level of pyramid

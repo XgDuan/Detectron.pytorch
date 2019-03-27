@@ -159,6 +159,7 @@ def main():
     elif 'gqa' in args.dataset:
         cfg.TRAIN.DATASETS = ('gqa_train',)
         cfg.MODEL.NUM_CLASSES = 1703
+        cfg.MODEL.NUM_ATTRIBUTES = 617
     else:
         raise ValueError("Unexpected args.dataset: {}".format(args.dataset))
 
