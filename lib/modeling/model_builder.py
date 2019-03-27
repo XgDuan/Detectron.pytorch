@@ -153,9 +153,7 @@ class Generalized_RCNN(nn.Module):
         return_dict = {}  # A dict to collect return variables
 
         blob_conv = self.Conv_Body(im_data)
-
         rpn_ret = self.RPN(blob_conv, im_info, roidb)
-
         # if self.training:
         #     # can be used to infer fg/bg ratio
         #     return_dict['rois_label'] = rpn_ret['labels_int32']

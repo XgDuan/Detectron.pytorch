@@ -45,7 +45,7 @@ __C.TRAIN.DATASETS = ()
 __C.TRAIN.SCALES = (600, )
 
 # Max pixel size of the longest side of a scaled input image
-__C.TRAIN.MAX_SIZE = 1500
+__C.TRAIN.MAX_SIZE = 1000
 
 # Images *per GPU* in the training minibatch
 # Total images per minibatch = TRAIN.IMS_PER_BATCH * NUM_GPUS
@@ -949,7 +949,7 @@ __C.EPS = 1e-14
 
 # Root directory of project
 __C.ROOT_DIR = osp.abspath(osp.join(osp.dirname(__file__), '..', '..'))
-# __C.ROOT_DIR = '.'
+
 # Output basedir
 __C.OUTPUT_DIR = 'Outputs'
 
@@ -960,7 +960,7 @@ __C.MATLAB = 'matlab'
 __C.VIS = False
 
 # Score threshold for visualization
-__C.VIS_TH = 0.5
+__C.VIS_TH = 0.9
 
 # Expected results should take the form of a list of expectations, each
 # specified by four elements (dataset, task, metric, expected value). For
@@ -974,7 +974,7 @@ __C.EXPECTED_RESULTS_EMAIL = ''
 
 # ------------------------------
 # Data directory
-__C.DATA_DIR = osp.join(__C.ROOT_DIR, 'data')
+__C.DATA_DIR = osp.abspath(osp.join(__C.ROOT_DIR, 'data'))
 
 # [Deprecate]
 __C.POOLING_MODE = 'crop'
@@ -991,12 +991,6 @@ __C.DEBUG = False
 
 # [Infered value]
 __C.PYTORCH_VERSION_LESS_THAN_040 = False
-
-# --------------------------------------------------------------------------- #
-# dataset option
-# --------------------------------------------------------------------------- #
-__C.GQA = AttrDict()
-__C.GQA.CATEGORIES_FILE = osp.join(__C.DATA_DIR, 'sceneGraphs', 'categories.pkl')
 
 # ---------------------------------------------------------------------------- #
 # mask heads or keypoint heads that share res5 stage weights and
@@ -1073,7 +1067,6 @@ def merge_cfg_from_list(cfg_list):
             value, d[subkey], subkey, full_key
         )
         d[subkey] = value
-
 
 cfg_from_list = merge_cfg_from_list
 

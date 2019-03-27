@@ -239,12 +239,15 @@ def _expand_bbox_targets(bbox_target_data):
     bbox_targets = blob_utils.zeros((clss.size, 4 * num_bbox_reg_classes))
     bbox_inside_weights = blob_utils.zeros(bbox_targets.shape)
     inds = np.where(clss > 0)[0]
-    for ind in inds:
-        cls = int(clss[ind])
-        start = 4 * cls
-        end = start + 4
-        bbox_targets[ind, start:end] = bbox_target_data[ind, 1:]
-        bbox_inside_weights[ind, start:end] = (1.0, 1.0, 1.0, 1.0)
+    try:
+        for ind in inds:
+            cls = int(clss[ind])
+            start = 4 * cls
+            end = start + 4
+            bbox_targets[ind, start:end] = bbox_target_data[ind, 1:]
+            bbox_inside_weights[ind, start:end] = (1.0, 1.0, 1.0, 1.0)
+    except Exception:
+        import pdb; pdb.set_trace()
     return bbox_targets, bbox_inside_weights
 
 

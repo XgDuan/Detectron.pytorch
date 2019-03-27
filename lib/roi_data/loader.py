@@ -27,7 +27,6 @@ class RoiDataLoader(data.Dataset):
         blobs, valid = get_minibatch(single_db)
         #TODO: Check if minibatch is valid ? If not, abandon it.
         # Need to change _worker_loop in torch.utils.data.dataloader.py.
-
         # Squeeze batch dim
         for key in blobs:
             if key != 'roidb':
@@ -118,7 +117,7 @@ class RoiDataLoader(data.Dataset):
 
 def cal_minibatch_ratio(ratio_list):
     """Given the ratio_list, we want to make the RATIO same for each minibatch on each GPU.
-    Note: this only work for 1) cfg.TRAIN.MAX_SIZE is ignored during `prep_im_for_blob` 
+    Note: this only work for 1) cfg.TRAIN.MAX_SIZE is ignored during `prep_im_for_blob`
     and 2) cfg.TRAIN.SCALES containing SINGLE scale.
     Since all prepared images will have same min side length of cfg.TRAIN.SCALES[0], we can
      pad and batch images base on that.

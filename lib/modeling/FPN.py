@@ -389,7 +389,6 @@ class fpn_rpn_outputs(nn.Module):
             fpn_rpn_bbox_pred = self.FPN_RPN_bbox_pred(fpn_rpn_conv)
             return_dict['rpn_cls_logits_fpn' + slvl] = fpn_rpn_cls_score
             return_dict['rpn_bbox_pred_fpn' + slvl] = fpn_rpn_bbox_pred
-
             if not self.training or cfg.MODEL.FASTER_RCNN:
                 # Proposals are needed during:
                 #  1) inference (== not model.train) for RPN only and Faster R-CNN
@@ -415,7 +414,6 @@ class fpn_rpn_outputs(nn.Module):
             # CollectAndDistributeFpnRpnProposals also labels proposals when in training mode
             blobs_out = self.CollectAndDistributeFpnRpnProposals(rois_blobs + score_blobs, roidb, im_info)
             return_dict.update(blobs_out)
-
         return return_dict
 
 

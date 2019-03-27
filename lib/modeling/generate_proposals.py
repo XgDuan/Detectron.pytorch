@@ -52,7 +52,7 @@ class GenerateProposalsOp(nn.Module):
         # 6. apply NMS with a loose threshold (0.7) to the remaining proposals
         # 7. take after_nms_topN proposals after NMS
         # 8. return the top proposals
-        
+
         """Type conversion"""
         # predicted probability of fg object for each RPN anchor
         scores = rpn_cls_prob.data.cpu().numpy()

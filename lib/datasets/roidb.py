@@ -30,7 +30,7 @@ import utils.segms as segm_utils
 import utils.blob as blob_utils
 from core.config import cfg
 from .json_dataset import JsonDataset
-
+from .gqa_dataset import GqaDataset
 logger = logging.getLogger(__name__)
 
 
@@ -40,7 +40,10 @@ def combined_roidb_for_training(dataset_names, proposal_files):
     which involves caching certain types of metadata for each roidb entry.
     """
     def get_roidb(dataset_name, proposal_file):
-        ds = JsonDataset(dataset_name)
+        if 'gqa' in dataset_name:
+            ds = GqaDataset(dataset_name)
+        else:
+            ds = JsonDataset(dataset_name)
         roidb = ds.get_roidb(
             gt=True,
             proposal_file=proposal_file,
@@ -59,6 +62,7 @@ def combined_roidb_for_training(dataset_names, proposal_files):
     if len(proposal_files) == 0:
         proposal_files = (None, ) * len(dataset_names)
     assert len(dataset_names) == len(proposal_files)
+
     roidbs = [get_roidb(*args) for args in zip(dataset_names, proposal_files)]
     roidb = roidbs[0]
     for r in roidbs[1:]:

@@ -36,6 +36,7 @@ from core.config import cfg
 from core.test import im_detect_all
 from datasets import task_evaluation
 from datasets.json_dataset import JsonDataset
+from datasets.gqa_dataset import GqaDataset
 from modeling import model_builder
 import nn as mynn
 from utils.detectron_weight_helper import load_detectron_weight
@@ -126,13 +127,13 @@ def run_inference(
             )
 
     all_results = result_getter()
-    if check_expected_results and is_parent:
-        task_evaluation.check_expected_results(
-            all_results,
-            atol=cfg.EXPECTED_RESULTS_ATOL,
-            rtol=cfg.EXPECTED_RESULTS_RTOL
-        )
-        task_evaluation.log_copy_paste_friendly_results(all_results)
+    # if check_expected_results and is_parent:
+    #     task_evaluation.check_expected_results(
+    #         all_results,
+    #         atol=cfg.EXPECTED_RESULTS_ATOL,
+    #         rtol=cfg.EXPECTED_RESULTS_RTOL
+    #     )
+    #     task_evaluation.log_copy_paste_friendly_results(all_results)
 
     return all_results
 
@@ -145,7 +146,11 @@ def test_net_on_dataset(
         multi_gpu=False,
         gpu_id=0):
     """Run inference on a dataset."""
-    dataset = JsonDataset(dataset_name)
+    if 'gqa' in dataset_name:
+        dataset = GqaDataset(dataset_name)
+    else:
+        dataset = JsonDataset(dataset_name)
+    # dataset = JsonDataset(dataset_name)
     test_timer = Timer()
     test_timer.tic()
     if multi_gpu:
@@ -251,7 +256,6 @@ def test_net(
 
         im = cv2.imread(entry['image'])
         cls_boxes_i, cls_segms_i, cls_keyps_i = im_detect_all(model, im, box_proposals, timers)
-
         extend_results(i, all_boxes, cls_boxes_i)
         if cls_segms_i is not None:
             extend_results(i, all_segms, cls_segms_i)
@@ -344,7 +348,11 @@ def get_roidb_and_dataset(dataset_name, proposal_file, ind_range):
     """Get the roidb for the dataset specified in the global cfg. Optionally
     restrict it to a range of indices if ind_range is a pair of integers.
     """
-    dataset = JsonDataset(dataset_name)
+    if 'gqa' in dataset_name:
+        dataset = GqaDataset(dataset_name)
+    else:
+        dataset = JsonDataset(dataset_name)
+    # dataset = JsonDataset(dataset_name)
     if cfg.TEST.PRECOMPUTED_PROPOSALS:
         assert proposal_file, 'No proposal file given'
         roidb = dataset.get_roidb(
